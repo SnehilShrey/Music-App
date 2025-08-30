@@ -2,6 +2,7 @@ let playlist = [];
 let currentIndex = 0;
 let audio = document.getElementById("audio");
 let nowPlaying = document.getElementById("now-playing");
+let shuffleMode = false; // ⭐ added: shuffle flag
 
 fetch("songs.json")
     .then(res => res.json())
@@ -63,10 +64,38 @@ document.getElementById("next").addEventListener("click", () => {
     audio.play();
 });
 
+// ⭐ changed shuffle button logic
 document.getElementById("shuffle").addEventListener("click", () => {
-    let randomIndex = Math.floor(Math.random() * playlist.length);
-    loadSong(randomIndex);
-    audio.play();
+    shuffleMode = !shuffleMode; // toggle shuffle mode
+    if (shuffleMode) {
+        // immediately start with a random song
+        let randomIndex;
+        do {
+            randomIndex = Math.floor(Math.random() * playlist.length);
+        } while (randomIndex === currentIndex);
+        loadSong(randomIndex);
+        audio.play();
+    } else {
+        // if turning shuffle off, continue from currentIndex
+        loadSong(currentIndex);
+        audio.play();
+    }
+});
+
+// ⭐ added: handle song end (continuous play)
+audio.addEventListener("ended", () => {
+    if (shuffleMode) {
+        let nextIndex;
+        do {
+            nextIndex = Math.floor(Math.random() * playlist.length);
+        } while (nextIndex === currentIndex); // avoid repeat
+        loadSong(nextIndex);
+        audio.play();
+    } else {
+        currentIndex = (currentIndex + 1) % playlist.length; // next in order
+        loadSong(currentIndex);
+        audio.play();
+    }
 });
 
 function displayPlaylist() {
